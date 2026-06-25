@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node ./node_modules/typescript/bin/tsc",
     "start": "node --env-file=.env dist/server.js",
+    "start:stdio": "node --env-file=.env dist/stdio.js",
     "dev": "node --env-file=.env --watch dist/server.js",
     "dev:build": "node ./node_modules/typescript/bin/tsc --watch",
     "type-check": "node ./node_modules/typescript/bin/tsc --noEmit"

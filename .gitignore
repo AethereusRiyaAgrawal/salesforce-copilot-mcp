@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.sf-tokens.json
 .dev.vars
 private.key
 private_key_b64.txt

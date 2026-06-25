@@ -37,6 +37,7 @@ function buildEnv(): Env {
     SF_CLIENT_ID: process.env.SF_CLIENT_ID!,
     SF_CLIENT_SECRET: process.env.SF_CLIENT_SECRET,
     EXTERNAL_BASE_URL: process.env.EXTERNAL_BASE_URL,
+    MCP_API_KEY: process.env.MCP_API_KEY,
     DEV_BYPASS_USER_ID: process.env.DEV_BYPASS_USER_ID,
     DEV_BYPASS_USER_NAME: process.env.DEV_BYPASS_USER_NAME,
     DEV_BYPASS_TENANT_ID: process.env.DEV_BYPASS_TENANT_ID,
@@ -154,11 +155,25 @@ function getBase(req: Request): string {
 }
 
 function requirePrincipal(req: Request, res: Response): { principal: MicrosoftPrincipal; principalKey: string } | null {
+  // If MCP_API_KEY is configured, validate it before identity extraction.
+  // Copilot (or any client) must send: Authorization: Bearer <MCP_API_KEY>
+  if (env.MCP_API_KEY) {
+    const authHeader = req.header('authorization');
+    const supplied = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+    if (supplied !== env.MCP_API_KEY) {
+      res.status(401).json({
+        error: 'invalid_api_key',
+        error_description: 'A valid MCP_API_KEY is required. Set Authorization: Bearer <key> on your request.',
+      });
+      return null;
+    }
+  }
+
   const principal = getMicrosoftPrincipal(req, env);
   if (!principal) {
     res.status(401).json({
       error: 'microsoft_auth_required',
-      error_description: 'Microsoft identity is required. Configure Azure App Service Authentication with Microsoft Entra ID for Microsoft 365 Copilot and Teams.',
+      error_description: 'Microsoft identity is required. On Azure: enable App Service Authentication. Elsewhere: set DEV_BYPASS_USER_ID or send an Azure AD Bearer token.',
     });
     return null;
   }
@@ -316,6 +331,15 @@ app.use((req: Request, res: Response, next) => {
 
   const auth = requirePrincipal(req, res);
   if (!auth) return;
+
+  // /sse is the discovery endpoint — only Microsoft identity is required here.
+  // Salesforce session is validated on the actual MCP paths.
+  if (req.path === '/sse') {
+    const authedReq = req as AuthedRequest;
+    authedReq.principal = auth.principal;
+    authedReq.principalKey = auth.principalKey;
+    return next();
+  }
 
   const sfTokens = getSession(auth.principalKey);
   if (!sfTokens) {

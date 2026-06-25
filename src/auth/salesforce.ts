@@ -48,6 +48,7 @@ export interface Env {
   SF_CLIENT_ID: string;
   SF_CLIENT_SECRET?: string;
   EXTERNAL_BASE_URL?: string;
+  MCP_API_KEY?: string;
   DEV_BYPASS_USER_ID?: string;
   DEV_BYPASS_USER_NAME?: string;
   DEV_BYPASS_TENANT_ID?: string;
