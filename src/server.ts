@@ -359,11 +359,19 @@ app.use((req: Request, res: Response, next) => {
 
   const sfTokens = getSession(auth.principalKey);
   if (!sfTokens) {
-    res.status(401).json({
-      error: 'salesforce_not_connected',
-      error_description: 'This Microsoft 365 user has not connected Salesforce yet.',
-      authorization_url: `${getBase(req)}/auth/salesforce/start`,
-    });
+    const body = req.body as Record<string, unknown>;
+    if (body?.id != null) {
+      res.json({
+        jsonrpc: '2.0',
+        id: body.id,
+        error: {
+          code: -32001,
+          message: `Salesforce not connected. Visit ${getBase(req)}/auth/salesforce/start to connect your Salesforce org.`,
+        },
+      });
+    } else {
+      res.status(202).end();
+    }
     return;
   }
 
