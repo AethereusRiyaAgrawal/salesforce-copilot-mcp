@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.dev.vars
+private.key
+private_key_b64.txt
+certificate.crt
+*.env
+.env
+.wrangler/
