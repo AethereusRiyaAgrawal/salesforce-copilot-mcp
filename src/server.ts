@@ -341,6 +341,22 @@ app.use((req: Request, res: Response, next) => {
     return next();
   }
 
+  // MCP protocol handshake messages don't need a Salesforce session.
+  // Tool calls will still fail with a clear error if SF isn't connected.
+  const method = req.body?.method as string | undefined;
+  const isMcpHandshake = method === 'initialize' ||
+                         method === 'notifications/initialized' ||
+                         method === 'tools/list' ||
+                         method === 'ping';
+
+  if (isMcpHandshake) {
+    const authedReq = req as AuthedRequest;
+    authedReq.principal = auth.principal;
+    authedReq.principalKey = auth.principalKey;
+    authedReq.userEnv = { ...env };
+    return next();
+  }
+
   const sfTokens = getSession(auth.principalKey);
   if (!sfTokens) {
     res.status(401).json({
