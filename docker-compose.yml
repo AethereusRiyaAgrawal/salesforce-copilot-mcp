@@ -11,3 +11,17 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  # Uncomment and configure to run a second server on the same instance:
+  # mcp-2:
+  #   build: .
+  #   ports:
+  #     - "3002:3000"
+  #   env_file:
+  #     - .env.2          # separate .env file with different SF org / API key
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1))"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
